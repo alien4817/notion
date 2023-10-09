@@ -1,0 +1,34 @@
+<html>
+<head>
+    <title>产品订购页面</title>
+</head>
+<body>
+
+<h1>欢迎来到产品订购页面</h1>
+
+<form action="/submit-order" method="post" id="orderForm">
+    <!-- 产品选择 -->
+    <label for="product">选择产品:</label>
+    <select name="product" id="product">
+        <option value="apple">苹果</option>
+        <option value="banana">香蕉</option>
+        <option value="cherry">樱桃</option>
+    </select><br><br>
+
+    <!-- 选择数量 -->
+    <label for="quantity">数量:</label>
+    <input type="number" id="quantity" name="quantity" min="1" max="100"><br><br>
+
+    <!-- 联系信息 -->
+    <label for="email">电子邮件:</label>
+    <input type="email" id="email" name="email"><br><br>
+
+    <label for="phone">电话:</label>
+    <input type="tel" id="phone" name="phone"><br><br>
+
+    <!-- 提交按钮 -->
+    <input type="submit" value="提交订单">
+</form>
+
+</body>
+</html>
