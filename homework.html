@@ -122,15 +122,24 @@
         <h1 id="main-title">調劑學實驗報告內容</h1>
         <h2 id="subtitle">住院藥局作業精進建議</h2>
         <nav class="nav" role="navigation" aria-label="內容切換導航">
+            <!-- 原本的三個頁籤 -->
             <button onclick="showFrame(1)" aria-controls="frame1" aria-label="顯示頁面 1 內容">藥學組4-3</button>
             <button onclick="showFrame(2)" aria-controls="frame2" aria-label="顯示頁面 2 內容">藥學組4-1</button>
             <button onclick="showFrame(3)" aria-controls="frame3" aria-label="顯示頁面 3 內容">藥學組4-2</button>
+            <!-- 新增的第 4 頁籤：「臨床組4-1」 -->
+            <button onclick="showFrame(4)" aria-controls="frame4" aria-label="顯示頁面 4 內容">臨床組4-1</button>
         </nav>
         
         <div id="content-area" role="region" aria-live="polite">
+            <!-- 既有的三個 iframe -->
             <iframe id="frame1" class="active" src="https://alien4817.notion.site/ebd/1a9e29587e6180e48d27f62c2ddda157" allowfullscreen title="頁面 1 內容"></iframe>
             <iframe id="frame2" src="https://alien4817.notion.site/ebd/1a9e29587e6180b19c7fddba166ab601" allowfullscreen title="頁面 2 內容"></iframe>
             <iframe id="frame3" src="https://alien4817.notion.site/ebd/1a9e29587e6180a2879cd303351695c6" allowfullscreen title="頁面 3 內容"></iframe>
+            <!-- 第 4 個 iframe，指向「臨床組4-1」頁面 -->
+            <iframe id="frame4" src="https://alien4817.notion.site/ebd/1b0e29587e6180c69993ff144817696b"
+                    width="100%" height="600" frameborder="0"
+                    allowfullscreen title="頁面 4 內容">
+            </iframe>
         </div>
     </div>
 
@@ -143,13 +152,17 @@
             activeFrame.classList.add('active');
             // 更新ARIA狀態
             document.querySelectorAll('.nav button').forEach(btn => {
-                btn.setAttribute('aria-expanded', btn.getAttribute('aria-controls') === `frame${frameNumber}` ? 'true' : 'false');
+                btn.setAttribute('aria-expanded', 
+                    btn.getAttribute('aria-controls') === `frame${frameNumber}` ? 'true' : 'false'
+                );
             });
         }
         
-        // 初始化
+        // 頁面載入後，先將第 1 頁顯示，並設定 aria-expanded 狀態
         document.querySelectorAll('.nav button').forEach(btn => {
-            btn.setAttribute('aria-expanded', btn.getAttribute('aria-controls') === 'frame1' ? 'true' : 'false');
+            btn.setAttribute('aria-expanded', 
+                btn.getAttribute('aria-controls') === 'frame1' ? 'true' : 'false'
+            );
         });
         showFrame(1);
     </script>
