@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>藥品警示系統開發實務課程</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c6eb5;
+            --secondary-color: #f8f9fa;
+            --accent-color: #ff7f50;
+            --text-color: #333;
+            --light-blue: #e9f0f8;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .hero-section {
+            background: linear-gradient(rgba(44, 110, 181, 0.8), rgba(44, 110, 181, 0.9)), url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+        }
+        
+        .section {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+            color: var(--primary-color);
+            position: relative;
+        }
+        
+        .section-title:after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 3px;
+            background: var(--accent-color);
+            margin: 15px auto;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 30px;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .card-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .bg-light-blue {
+            background-color: var(--light-blue);
+        }
+        
+        .feature-box {
+            text-align: center;
+            padding: 30px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1c5a9c;
+            border-color: #1c5a9c;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(44, 110, 181, 0.3);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(44, 110, 181, 0.3);
+        }
+        
+        .testimonial {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+        
+        .testimonial-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 20px;
+        }
+        
+        .cta-section {
+            background: linear-gradient(rgba(44, 110, 181, 0.9), rgba(44, 110, 181, 0.8)), url('https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            background-color: var(--primary-color);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -3px;
+        }
+        
+        .timeline-container {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 50%;
+        }
+        
+        .timeline-container::after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            right: -13px;
+            background-color: white;
+            border: 4px solid var(--accent-color);
+            top: 15px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .left {
+            left: 0;
+        }
+        
+        .right {
+            left: 50%;
+        }
+        
+        .left::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            right: 30px;
+            border: medium solid white;
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent white;
+        }
+        
+        .right::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            left: 30px;
+            border: medium solid white;
+            border-width: 10px 10px 10px 0;
+            border-color: transparent white transparent transparent;
+        }
+        
+        .right::after {
+            left: -12px;
+        }
+        
+        .timeline-content {
+            padding: 20px 30px;
+            background-color: white;
+            position: relative;
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media screen and (max-width: 768px) {
+            .timeline::after {
+                left: 31px;
+            }
+            
+            .timeline-container {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+            
+            .timeline-container::before {
+                left: 60px;
+                border: medium solid white;
+                border-width: 10px 10px 10px 0;
+                border-color: transparent white transparent transparent;
+            }
+            
+            .left::after, .right::after {
+                left: 18px;
+            }
+            
+            .right {
+                left: 0%;
+            }
+        }
+        
+        .img-fluid {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        footer {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 50px 0 20px;
+        }
+        
+        .social-icons a {
+            color: white;
+            font-size: 1.5rem;
+            margin-right: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icons a:hover {
+            color: var(--accent-color);
+            transform: translateY(-3px);
+        }
+        
+        .footer-links a {
+            color: #aaa;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+            padding-left: 5px;
+        }
+        
+        .copyright {
+            border-top: 1px solid #333;
+            padding-top: 20px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 導航欄 -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-pills text-primary me-2"></i>
+                <span class="fw-bold">藥品警示系統</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#intro">課程介紹</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">系統功能</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#data">數據分析</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#curriculum">課程內容</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#instructor">講師介紹</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white ms-lg-3" href="#register">立即報名</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 頂部橫幅 -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h1 class="display-4 fw-bold mb-4">藥品警示系統開發實務課程</h1>
+                    <p class="lead mb-5">提升用藥安全，降低不良反應風險，打造智能化藥品監測系統</p>
+                    <div>
+                        <a href="#register" class="btn btn-light btn-lg me-3">立即報名</a>
+                        <a href="#intro" class="btn btn-outline-light btn-lg">了解更多</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 課程介紹區塊 -->
+    <section id="intro" class="section">
+        <div class="container">
+            <h2 class="section-title">課程介紹</h2>
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <h3 class="mb-4">為什麼需要藥品警示系統？</h3>
+                    <p>在現代醫療環境中，藥品安全監測是確保病患健康的關鍵環節。然而，隨著藥品種類的增加和病患數量的上升，傳統人工審核方式已難以應對日益複雜的用藥安全挑戰。</p>
+                    <p>本課程將帶領您從零開始，學習如何利用Python程式開發一套自動化藥品警示系統，能夠：</p>
+                    <ul>
+                        <li>自動比對病患用藥與檢驗數據</li>
+                        <li>即時識別潛在的藥物風險</li>
+                        <li>生成標準化的警示報告</li>
+                        <li>提升藥品使用安全性</li>
+                    </ul>
+                    <p>無論您是醫療資訊人員、臨床藥師，還是對醫療數據分析感興趣的開發者，本課程都能幫助您掌握實用的技能，為醫療安全貢獻力量。</p>
+                </div>
+                <div class="col-lg-6">
+                    <img src="images/system_workflow.png" alt="藥品警示系統流程圖" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 系統功能展示 -->
+    <section id="features" class="section bg-light-blue">
+        <div class="container">
+            <h2 class="section-title">系統功能展示</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <div class="feature-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <h4>多源數據整合</h4>
+                        <p>系統能夠自動整合多種藥品病患名單與檢驗數據，無需手動操作，大幅提升工作效率。</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h4>智能風險識別</h4>
+                        <p>根據預設的審查規則，自動識別潛在風險，包括肌酸酐異常、INR異常、年齡風險等多項指標。</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-medical-alt"></i>
+                        </div>
+                        <h4>標準化報告生成</h4>
+                        <p>自動生成格式統一的警示報告，清晰標記異常項目，便於醫療人員快速審核與決策。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-5">
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h4 class="card-title">系統運作流程</h4>
+                            <p class="card-text">藥品警示系統採用模組化設計，從數據讀取、整合、規則應用到報告生成，每個環節都經過精心設計，確保系統運行穩定高效。</p>
+                            <div class="timeline mt-4">
+                                <div class="timeline-container left">
+                                    <div class="timeline-content">
+                                        <h5>步驟 1</h5>
+                                        <p>讀取藥品病患名單與檢驗數據</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-container right">
+                                    <div class="timeline-content">
+                                        <h5>步驟 2</h5>
+                                        <p>數據清洗與格式轉換</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-container left">
+                                    <div class="timeline-content">
+                                        <h5>步驟 3</h5>
+                                        <p>合併病患與檢驗資料</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-container right">
+                                    <div class="timeline-content">
+                                        <h5>步驟 4</h5>
+                                        <p>應用審查規則檢查異常</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-container left">
+                                    <div class="timeline-content">
+                                        <h5>步驟 5</h5>
+                                        <p>產生警示報告</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h4 class="card-title">審查規則設定</h4>
+                            <p class="card-text">系統內建多種審查規則，可根據不同藥品特性進行客製化設定：</p>
+                            <ul class="list-group list-group-flush mt-3">
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <strong>腎功能監測：</strong> 根據藥品特性設定不同的肌酸酐清除率(CrCl)閾值
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <strong>肝功能監測：</strong> 監測AST、ALT等指標是否超過安全閾值
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <strong>凝血功能：</strong> 監測INR值是否在安全範圍內
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <strong>年齡風險：</strong> 識別高齡患者的用藥風險
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <strong>腎傷害分級：</strong> 根據eGFR值進行腎功能損傷程度分級
+                                </li>
+                            </ul>
+                            <p class="mt-3">所有規則均可根據臨床需求進行調整，確保系統適應不同醫療機構的實際情況。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 數據視覺化展示 -->
+    <section id="data" class="section">
+        <div class="container">
+            <h2 class="section-title">數據視覺化展示</h2>
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">藥品分佈分析</h4>
+                            <p class="card-text">系統能夠自動分析不同藥品的使用情況，幫助醫療機構了解藥品使用趨勢。</p>
+                            <img src="images/drug_distribution_pie.png" alt="藥品分佈圓餅圖" class="img-fluid mt-3">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">異常項目分佈</h4>
+                            <p class="card-text">清晰展示正常與異常案例的分佈情況，幫助醫療人員快速掌握整體風險狀況。</p>
+                            <img src="images/abnormal_distribution_bar.png" alt="異常項目分佈長條圖" class="img-fluid mt-3">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">各藥品異常項目分析</h4>
+                            <p class="card-text">比較不同藥品的異常情況，幫助識別特定藥品可能存在的風險模式。</p>
+                            <img src="images/drug_abnormal_stacked_bar.png" alt="各藥品異常項目分佈堆疊長條圖" class="img-fluid mt-3">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">異常類型詳細分析</h4>
+                            <p class="card-text">深入分析各種異常類型的出現頻率，幫助醫療機構針對性地制定風險管理策略。</p>
+                            <img src="images/abnormal_types_analysis.png" alt="異常類型分析圖" class="img-fluid mt-3">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <p class="lead">透過這些視覺化圖表，醫療機構可以直觀地了解藥品使用情況與潛在風險，<br>從而制定更有效的藥品管理策略，提升用藥安全。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 課程內容與收穫 -->
+    <section id="curriculum" class="section bg-light-blue">
+        <div class="container">
+            <h2 class="section-title">課程內容與收穫</h2>
+            <div class="row">
+                <div class="col-lg-6 mb-5">
+                    <h3 class="mb-4">課程大綱</h3>
+                    <div class="accordion" id="courseAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    模組一：藥品安全監測基礎
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#courseAccordion">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li>藥品不良反應的類型與風險</li>
+                                        <li>常見高風險藥品及其監測指標</li>
+                                        <li>藥品安全監測的法規要求</li>
+                                        <li>案例分析：藥品不良反應事件回顧</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                    模組二：Python數據處理基礎
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#courseAccordion">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li>Python環境設置與基本語法</li>
+                                        <li>Pandas庫介紹與數據操作</li>
+                                        <li>Excel檔案的讀取與處理</li>
+                                        <li>數據清洗與轉換技巧</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                    模組三：警示系統核心功能開發
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#courseAccordion">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li>系統架構設計與模組劃分</li>
+                                        <li>多源數據整合與合併技術</li>
+                                        <li>審查規則設計與實現</li>
+                                        <li>警示報告生成與格式化</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingFour">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                                    模組四：數據視覺化與報表
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#courseAccordion">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li>Matplotlib與Seaborn視覺化基礎</li>
+                                        <li>常用圖表類型與適用場景</li>
+                                        <li>交互式視覺化工具介紹</li>
+                                        <li>報表自動化生成與分發</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingFive">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive">
+                                    模組五：系統部署與實際應用
+                                </button>
+                            </h2>
+                            <div id="collapseFive" class="accordion-collapse collapse" data-bs-parent="#courseAccordion">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li>系統打包與發布</li>
+                                        <li>定時任務設置與自動化運行</li>
+                                        <li>系統維護與更新策略</li>
+                                        <li>實際應用案例分享</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <h3 class="mb-4">學習收穫</h3>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="card-icon">
+                                        <i class="fas fa-laptop-code"></i>
+                                    </div>
+                                    <h5 class="card-title">技術能力</h5>
+                                    <p class="card-text">掌握Python數據處理、分析與視覺化技能，能夠獨立開發數據處理應用</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="card-icon">
+                                        <i class="fas fa-pills"></i>
+                                    </div>
+                                    <h5 class="card-title">專業知識</h5>
+                                    <p class="card-text">深入了解藥品安全監測原則與實踐，提升藥品風險管理能力</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="card-icon">
+                                        <i class="fas fa-project-diagram"></i>
+                                    </div>
+                                    <h5 class="card-title">系統思維</h5>
+                                    <p class="card-text">培養系統化思考能力，能夠設計與實現完整的解決方案</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="card-icon">
+                                        <i class="fas fa-hospital-user"></i>
+                                    </div>
+                                    <h5 class="card-title">實務應用</h5>
+                                    <p class="card-text">獲得實際案例經驗，能夠將所學知識應用於真實醫療環境</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded shadow-sm mt-4">
+                        <h5 class="mb-3"><i class="fas fa-certificate text-warning me-2"></i>結業證書</h5>
+                        <p>完成課程並通過專案評估後，將獲得正式結業證書，證明您具備藥品警示系統開發的專業能力。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 講師介紹 -->
+    <section id="instructor" class="section">
+        <div class="container">
+            <h2 class="section-title">講師介紹</h2>
+            <div class="row align-items-center">
+                <div class="col-lg-4 mb-4 mb-lg-0 text-center">
+                    <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="講師照片" class="img-fluid rounded-circle mb-3" style="width: 200px; height: 200px; object-fit: cover;">
+                    <h4>王博士</h4>
+                    <p class="text-muted">資深醫療資訊專家</p>
+                    <div class="social-icons mt-3">
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fas fa-globe"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <h3 class="mb-4">專業背景</h3>
+                    <p>王博士擁有超過15年的醫療資訊系統開發經驗，專長於藥品安全監測系統與醫療數據分析。曾任多家醫學中心資訊部門主管，主導開發多套醫療資訊系統，並在國際醫療資訊會議上發表多篇論文。</p>
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-graduation-cap text-primary me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h5 class="mb-1">學術背景</h5>
+                                    <p class="mb-0">醫學資訊學博士<br>臨床藥學碩士</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-briefcase text-primary me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h5 class="mb-1">工作經歷</h5>
+                                    <p class="mb-0">醫學中心資訊部主管<br>醫療軟體公司技術總監</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-award text-primary me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h5 class="mb-1">專業認證</h5>
+                                    <p class="mb-0">醫療資訊系統專業認證<br>Python數據分析專家認證</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-book text-primary me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h5 class="mb-1">著作出版</h5>
+                                    <p class="mb-0">《醫療數據分析實戰》<br>《Python在醫療領域的應用》</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 學員見證與案例 -->
+    <section class="section bg-light-blue">
+        <div class="container">
+            <h2 class="section-title">學員見證與案例</h2>
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <div class="testimonial">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="學員照片" class="testimonial-img">
+                            <div>
+                                <h5 class="mb-0">李小姐</h5>
+                                <p class="text-muted mb-0">醫院臨床藥師</p>
+                            </div>
+                        </div>
+                        <p>"參加這個課程前，我們藥局每天都要花費大量時間手動檢查藥品與檢驗數據的匹配情況。學習並實施這套系統後，我們將審核時間縮短了80%，同時提高了風險識別的準確率。現在我們能夠將更多時間用於病患諮詢和臨床服務。"</p>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="testimonial">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="學員照片" class="testimonial-img">
+                            <div>
+                                <h5 class="mb-0">張先生</h5>
+                                <p class="text-muted mb-0">醫院資訊部門主管</p>
+                            </div>
+                        </div>
+                        <p>"作為醫院資訊部門的負責人，我一直在尋找能夠提升藥品安全管理的解決方案。這個課程不僅教會了我們如何開發警示系統，還幫助我們理解了如何將其整合到現有的醫院資訊系統中。系統上線後，我們的藥品不良反應事件減少了30%。"</p>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="testimonial">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="學員照片" class="testimonial-img">
+                            <div>
+                                <h5 class="mb-0">陳小姐</h5>
+                                <p class="text-muted mb-0">醫療軟體開發者</p>
+                            </div>
+                        </div>
+                        <p>"作為一名醫療軟體開發者，我參加這個課程是為了擴展我的技能組合。課程內容非常實用，從基礎Python知識到實際系統開發，每個環節都講解得很清晰。我特別喜歡課程中的實際案例分析，這讓我更好地理解了醫療環境中的數據處理挑戰。"</p>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="testimonial">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="學員照片" class="testimonial-img">
+                            <div>
+                                <h5 class="mb-0">林先生</h5>
+                                <p class="text-muted mb-0">地區醫院藥劑部主任</p>
+                            </div>
+                        </div>
+                        <p>"我們醫院規模不大，但用藥安全同樣重要。這個課程幫助我們建立了一套符合自身需求的警示系統，不需要昂貴的商業軟體。系統實施後，我們能夠更有效地監控高風險藥品，特別是對於腎功能不全的患者，大大提高了用藥安全性。"</p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <a href="#register" class="btn btn-primary btn-lg">加入他們的行列</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 報名與聯絡資訊 -->
+    <section id="register" class="section cta-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2 class="mb-4">立即報名參加課程</h2>
+                    <p class="lead mb-5">名額有限，請盡早報名以確保您的學習機會</p>
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body text-center p-5">
+                                    <h3 class="card-title">基礎班</h3>
+                                    <div class="display-4 my-4">$12,000</div>
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>5週課程（每週一次）</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>基礎理論與實作</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>線上學習資源</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>結業證書</li>
+                                    </ul>
+                                    <a href="#" class="btn btn-outline-light btn-lg w-100">立即報名</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body text-center p-5">
+                                    <h3 class="card-title">進階班</h3>
+                                    <div class="display-4 my-4">$18,000</div>
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>8週課程（每週一次）</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>進階功能開發</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>一對一專案指導</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>專業認證</li>
+                                    </ul>
+                                    <a href="#" class="btn btn-light btn-lg w-100">立即報名</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5">
+                        <h4 class="text-white">有任何問題？</h4>
+                        <p>請聯絡我們的課程顧問：<br>
+                        <i class="fas fa-envelope me-2"></i>course@example.com<br>
+                        <i class="fas fa-phone me-2"></i>(02) 1234-5678</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 頁尾資訊 -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="text-white mb-4">關於我們</h5>
+                    <p>我們致力於提供高品質的醫療資訊教育，幫助醫療專業人員提升技能，改善醫療服務品質。</p>
+                    <div class="social-icons mt-4">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="text-white mb-4">快速連結</h5>
+                    <div class="footer-links">
+                        <a href="#intro">課程介紹</a>
+                        <a href="#features">系統功能</a>
+                        <a href="#data">數據分析</a>
+                        <a href="#curriculum">課程內容</a>
+                        <a href="#instructor">講師介紹</a>
+                        <a href="#register">立即報名</a>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <h5 class="text-white mb-4">聯絡資訊</h5>
+                    <p><i class="fas fa-map-marker-alt me-2"></i>台北市信義區松仁路100號</p>
+                    <p><i class="fas fa-phone me-2"></i>(02) 1234-5678</p>
+                    <p><i class="fas fa-envelope me-2"></i>info@example.com</p>
+                </div>
+            </div>
+            <div class="text-center copyright">
+                <p>&copy; 2025 藥品警示系統開發實務課程. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 平滑滾動效果
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 70,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // 導航欄滾動效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow');
+            } else {
+                navbar.classList.remove('shadow');
+            }
+        });
+    </script>
+</body>
+</html>
