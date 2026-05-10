@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { diffRecords } from "./diff.js";
-import { fetchFDARecords } from "./fetchFDA.js";
+import { fetchFDARecords, NoFDARecordsFetchedError } from "./fetchFDA.js";
 import { normalizeFDARecords } from "./normalize.js";
 import { writeNotionChanges } from "./notion.js";
 import { readSnapshot, writeSnapshot } from "./snapshot.js";
@@ -9,7 +9,21 @@ import { readSnapshot, writeSnapshot } from "./snapshot.js";
 async function main() {
   console.log("[monitor] Starting drug shortage monitor");
 
-  const rawRecords = await fetchFDARecords();
+  let rawRecords;
+
+  try {
+    rawRecords = await fetchFDARecords();
+  } catch (error) {
+    if (error instanceof NoFDARecordsFetchedError) {
+      console.warn("[monitor] FDA DSMS source is currently unreachable from this runner.");
+      console.warn("[monitor] Keeping the existing snapshot and skipping Notion writes.");
+      console.warn(error.message);
+      return;
+    }
+
+    throw error;
+  }
+
   const records = normalizeFDARecords(rawRecords);
   const snapshot = await readSnapshot();
   const diff = diffRecords(records, snapshot);

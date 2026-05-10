@@ -17,6 +17,13 @@ type ExtractedRawFDARecord = RawFDARecord & {
   detail_link_text?: string;
 };
 
+export class NoFDARecordsFetchedError extends Error {
+  constructor(public readonly failures: string[]) {
+    super(`No FDA records fetched. Attempts failed:\n${failures.join("\n")}`);
+    this.name = "NoFDARecordsFetchedError";
+  }
+}
+
 function getTargetUrls() {
   const configuredUrls = process.env.FDA_DSMS_URL?.split(/[,\n]/)
     .map((url) => url.trim())
@@ -259,7 +266,7 @@ export async function fetchFDARecords() {
   }
 
   if (allRecords.length === 0 && failures.length > 0) {
-    throw new Error(`No FDA records fetched. Attempts failed:\n${failures.join("\n")}`);
+    throw new NoFDARecordsFetchedError(failures);
   }
 
   return allRecords;
