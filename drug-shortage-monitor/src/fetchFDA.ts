@@ -5,8 +5,8 @@ import { chromium, type Page } from "playwright";
 import type { RawFDARecord } from "./types.js";
 
 const DEFAULT_TARGET_URLS = [
-  "https://dsms.fda.gov.tw/LatestNews.aspx",
-  "https://dsms.fda.gov.tw/DrugList.aspx?s=3"
+  "http://dsms.fda.gov.tw/LatestNews.aspx",
+  "http://dsms.fda.gov.tw/DrugList.aspx?s=3"
 ];
 
 const USER_AGENT =
@@ -23,6 +23,16 @@ function getTargetUrls() {
     .filter(Boolean);
 
   return configuredUrls && configuredUrls.length > 0 ? configuredUrls : DEFAULT_TARGET_URLS;
+}
+
+function getUrlCandidates(url: string) {
+  const candidates = [url];
+
+  if (url.startsWith("https://")) {
+    candidates.push(url.replace(/^https:\/\//u, "http://"));
+  }
+
+  return [...new Set(candidates)];
 }
 
 function log(message: string, data?: unknown) {
@@ -159,12 +169,12 @@ async function enrichRecordsWithDetails(page: Page, sourceUrl: string, records: 
         detail_text: detail.detail_text
       });
 
-      await page.goto(sourceUrl, { waitUntil: "networkidle", timeout: 60_000 });
+      await page.goto(sourceUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
       await page.waitForTimeout(300);
     } catch (error) {
       log(`Detail fetch failed for "${record.detail_link_text}": ${(error as Error).message}`);
       enriched.push(record);
-      await page.goto(sourceUrl, { waitUntil: "networkidle", timeout: 60_000 }).catch(() => undefined);
+      await page.goto(sourceUrl, { waitUntil: "domcontentloaded", timeout: 60_000 }).catch(() => undefined);
     }
   }
 
@@ -185,7 +195,7 @@ async function fetchWithPlaywright(url: string) {
 
   try {
     const page = await browser.newPage({ userAgent: USER_AGENT });
-    await page.goto(url, { waitUntil: "networkidle", timeout: 60_000 });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.waitForTimeout(1_000);
 
     const html = await page.content();
@@ -197,24 +207,59 @@ async function fetchWithPlaywright(url: string) {
   }
 }
 
+async function fetchFromUrl(url: string) {
+  let staticRecords: ExtractedRawFDARecord[] = [];
+
+  try {
+    staticRecords = await fetchWithStaticHtml(url);
+  } catch (error) {
+    log(`Static fetch failed for ${url}: ${(error as Error).message}`);
+  }
+
+  try {
+    if (staticRecords.length > 0) {
+      return await fetchWithPlaywright(url);
+    }
+
+    log(`No rows found from static HTML; trying Playwright fallback for ${url}`);
+    return await fetchWithPlaywright(url);
+  } catch (error) {
+    log(`Playwright fetch failed for ${url}: ${(error as Error).message}`);
+
+    if (staticRecords.length > 0) {
+      log(`Using ${staticRecords.length} static rows without detail enrichment for ${url}`);
+      return staticRecords;
+    }
+
+    throw error;
+  }
+}
+
 export async function fetchFDARecords() {
   const allRecords: RawFDARecord[] = [];
+  const failures: string[] = [];
 
-  for (const url of getTargetUrls()) {
-    try {
-      const records = await fetchWithStaticHtml(url);
+  for (const configuredUrl of getTargetUrls()) {
+    let fetched = false;
 
-      if (records.length > 0) {
-        allRecords.push(...(await fetchWithPlaywright(url)));
-        continue;
+    for (const url of getUrlCandidates(configuredUrl)) {
+      try {
+        const records = await fetchFromUrl(url);
+        allRecords.push(...records);
+        fetched = true;
+        break;
+      } catch (error) {
+        failures.push(`${url}: ${(error as Error).message}`);
       }
-
-      log(`No rows found from static HTML; trying Playwright fallback for ${url}`);
-      allRecords.push(...(await fetchWithPlaywright(url)));
-    } catch (error) {
-      log(`Static fetch failed for ${url}: ${(error as Error).message}`);
-      allRecords.push(...(await fetchWithPlaywright(url)));
     }
+
+    if (!fetched) {
+      log(`All fetch attempts failed for ${configuredUrl}`);
+    }
+  }
+
+  if (allRecords.length === 0 && failures.length > 0) {
+    throw new Error(`No FDA records fetched. Attempts failed:\n${failures.join("\n")}`);
   }
 
   return allRecords;

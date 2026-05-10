@@ -4,8 +4,8 @@
 
 目標頁面：
 
-- https://dsms.fda.gov.tw/LatestNews.aspx
-- https://dsms.fda.gov.tw/DrugList.aspx?s=3
+- http://dsms.fda.gov.tw/LatestNews.aspx
+- http://dsms.fda.gov.tw/DrugList.aspx?s=3
 
 ## 安裝
 
@@ -142,11 +142,12 @@ Settings > Secrets and variables > Actions > Repository secrets
 `FDA_DSMS_URL` 建議值：
 
 ```text
-https://dsms.fda.gov.tw/LatestNews.aspx
-https://dsms.fda.gov.tw/DrugList.aspx?s=3
+http://dsms.fda.gov.tw/LatestNews.aspx
+http://dsms.fda.gov.tw/DrugList.aspx?s=3
 ```
 
 如果沒有設定 `FDA_DSMS_URL`，程式會使用內建預設的兩個 FDA 頁面。
+若已在 GitHub Secret 填入 `https://dsms.fda.gov.tw/...`，程式會自動再嘗試對應的 `http://` URL，避免 DSMS HTTPS/TLS 連線被 GitHub Actions runner 關閉時直接失敗。
 
 ## 除錯
 
