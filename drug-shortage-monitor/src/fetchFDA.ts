@@ -29,7 +29,7 @@ function getTargetUrls() {
     .map((url) => url.trim())
     .filter(Boolean);
 
-  return configuredUrls && configuredUrls.length > 0 ? configuredUrls : DEFAULT_TARGET_URLS;
+  return [...new Set([...(configuredUrls ?? []), ...DEFAULT_TARGET_URLS])];
 }
 
 function getUrlCandidates(url: string) {
