@@ -19,10 +19,52 @@ jobs:
       NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
       NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
       FDA_DSMS_URL: ${{ secrets.FDA_DSMS_URL }}
+      FDA_TO_NOTION: ${{ secrets.FDA_TO_NOTION }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Load FDA_TO_NOTION bundled secret
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const bundledSecret = process.env.FDA_TO_NOTION || "";
+          const githubEnv = process.env.GITHUB_ENV;
+          const allowedKeys = new Set(["NOTION_TOKEN", "NOTION_DATABASE_ID", "FDA_DSMS_URL"]);
+
+          if (!bundledSecret.trim()) {
+            process.exit(0);
+          }
+
+          for (const rawLine of bundledSecret.split(/\r?\n/)) {
+            const line = rawLine.trim();
+            if (!line || line.startsWith("#")) continue;
+
+            const separatorIndex = line.indexOf("=");
+            if (separatorIndex === -1) continue;
+
+            const key = line.slice(0, separatorIndex).trim();
+            const value = line.slice(separatorIndex + 1).trim();
+            if (!allowedKeys.has(key) || !value) continue;
+
+            console.log(`::add-mask::${value}`);
+            fs.appendFileSync(githubEnv, `${key}<<FDA_TO_NOTION_ENV\n${value}\nFDA_TO_NOTION_ENV\n`);
+          }
+          NODE
+
+      - name: Validate Notion secrets
+        run: |
+          if [ -z "$NOTION_TOKEN" ]; then
+            echo "::error::Repository secret NOTION_TOKEN is missing. Add it in Settings > Secrets and variables > Actions > Repository secrets."
+            exit 1
+          fi
+
+          if [ -z "$NOTION_DATABASE_ID" ]; then
+            echo "::error::Repository secret NOTION_DATABASE_ID is missing. Add it in Settings > Secrets and variables > Actions > Repository secrets."
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
