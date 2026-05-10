@@ -16,8 +16,18 @@ async function main() {
   } catch (error) {
     if (error instanceof NoFDARecordsFetchedError) {
       console.warn("[monitor] FDA DSMS source is currently unreachable from this runner.");
-      console.warn("[monitor] Keeping the existing snapshot and skipping Notion writes.");
       console.warn(error.message);
+
+      const snapshot = await readSnapshot();
+      if (snapshot.records.length === 0) {
+        console.warn("[monitor] Existing snapshot is empty; skipping Notion writes.");
+        return;
+      }
+
+      console.warn(
+        `[monitor] Using existing snapshot with ${snapshot.records.length} records for Notion backfill.`
+      );
+      await writeNotionChanges(snapshot.records, []);
       return;
     }
 

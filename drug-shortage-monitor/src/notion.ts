@@ -10,6 +10,7 @@ type NotionWriteSummary = {
   attempted: number;
   succeeded: number;
   failed: number;
+  skipped: number;
 };
 
 type NotionAppendSummary = NotionWriteSummary & {
@@ -153,6 +154,38 @@ async function queryPageByTitle(record: DrugShortageRecord, schema: NotionDataba
   return response.data.results?.[0]?.id as string | undefined;
 }
 
+async function queryPageByHashId(record: DrugShortageRecord) {
+  const token = process.env.NOTION_TOKEN;
+  const databaseId = process.env.NOTION_DATABASE_ID;
+
+  if (!token || !databaseId) {
+    throw new Error("Missing NOTION_TOKEN or NOTION_DATABASE_ID in .env");
+  }
+
+  const response = await axios.post(
+    `https://api.notion.com/v1/databases/${databaseId}/query`,
+    {
+      filter: {
+        property: "Hash ID",
+        rich_text: {
+          equals: record.hash_id
+        }
+      },
+      page_size: 1
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Notion-Version": NOTION_VERSION
+      },
+      timeout: 30_000
+    }
+  );
+
+  return response.data.results?.[0]?.id as string | undefined;
+}
+
 async function pageAlreadyHasDetailChildren(pageId: string) {
   const token = process.env.NOTION_TOKEN;
 
@@ -264,7 +297,8 @@ export async function writeNotionChanges(newRecords: DrugShortageRecord[], updat
   const summary: NotionWriteSummary = {
     attempted: newRecords.length + updatedRecords.length,
     succeeded: 0,
-    failed: 0
+    failed: 0,
+    skipped: 0
   };
 
   if (summary.attempted === 0) {
@@ -293,6 +327,12 @@ export async function writeNotionChanges(newRecords: DrugShortageRecord[], updat
 
   for (const item of writes) {
     try {
+      const existingPageId = await queryPageByHashId(item.record);
+      if (existingPageId) {
+        summary.skipped += 1;
+        continue;
+      }
+
       await createNotionPage(item.record, item.isNewCase, schema);
       summary.succeeded += 1;
     } catch (error) {
@@ -308,7 +348,7 @@ export async function writeNotionChanges(newRecords: DrugShortageRecord[], updat
   }
 
   console.log(
-    `[notion] Write summary: attempted=${summary.attempted}, succeeded=${summary.succeeded}, failed=${summary.failed}`
+    `[notion] Write summary: attempted=${summary.attempted}, succeeded=${summary.succeeded}, failed=${summary.failed}, skipped=${summary.skipped}`
   );
 
   return summary;

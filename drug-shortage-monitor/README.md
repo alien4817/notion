@@ -148,7 +148,7 @@ http://dsms.fda.gov.tw/DrugList.aspx?s=3
 
 如果沒有設定 `FDA_DSMS_URL`，程式會使用內建預設的兩個 FDA 頁面。
 若已在 GitHub Secret 填入 `https://dsms.fda.gov.tw/...`，程式會自動再嘗試對應的 `http://` URL，避免 DSMS HTTPS/TLS 連線被 GitHub Actions runner 關閉時直接失敗。
-若 DSMS 同時對 HTTP/HTTPS 都回傳 `socket hang up` 或 `ERR_EMPTY_RESPONSE`，monitor 會視為上游網站暫時無法從該 runner 存取，保留既有 snapshot、略過 Notion 寫入，並以成功狀態結束，避免排程因外部網站阻擋雲端 IP 而持續失敗。
+若 DSMS 同時對 HTTP/HTTPS 都回傳 `socket hang up` 或 `ERR_EMPTY_RESPONSE`，monitor 會視為上游網站暫時無法從該 runner 存取。此時會使用既有 snapshot 補寫 Notion，並用 `Hash ID` 查重避免重複新增；如果 snapshot 也是空的，才會略過 Notion 寫入。
 
 ## 除錯
 
