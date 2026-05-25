@@ -30,37 +30,43 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Load repository secrets
+      - name: Load repository secrets and variables
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_ALLOWED_USER_IDS: ${{ secrets.TELEGRAM_ALLOWED_USER_IDS }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: gemini-2.5-flash
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
+          SECRET_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          SECRET_TELEGRAM_ALLOWED_USER_IDS: ${{ secrets.TELEGRAM_ALLOWED_USER_IDS }}
+          SECRET_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SECRET_NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          SECRET_NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
+          VAR_TELEGRAM_BOT_TOKEN: ${{ vars.TELEGRAM_BOT_TOKEN }}
+          VAR_TELEGRAM_ALLOWED_USER_IDS: ${{ vars.TELEGRAM_ALLOWED_USER_IDS }}
+          VAR_GEMINI_API_KEY: ${{ vars.GEMINI_API_KEY }}
+          VAR_NOTION_TOKEN: ${{ vars.NOTION_TOKEN }}
+          VAR_NOTION_DATA_SOURCE_ID: ${{ vars.NOTION_DATA_SOURCE_ID }}
         run: |
           python3 - <<'PY'
           import os
           from pathlib import Path
 
           github_env = os.environ["GITHUB_ENV"]
-          keys = [
+          keys = {
               "TELEGRAM_BOT_TOKEN",
               "TELEGRAM_ALLOWED_USER_IDS",
               "GEMINI_API_KEY",
-              "GEMINI_MODEL",
               "NOTION_TOKEN",
               "NOTION_DATA_SOURCE_ID",
-          ]
+          }
 
           with Path(github_env).open("a", encoding="utf-8") as env_file:
               for key in keys:
-                  value = os.environ.get(key, "")
+                  value = os.environ.get(f"SECRET_{key}", "") or os.environ.get(f"VAR_{key}", "")
                   if not value:
                       continue
 
                   print(f"::add-mask::{value}")
+                  print(f"Loaded {key} from repository secret/variable.")
                   env_file.write(f"{key}<<TELEGRAM_NOTION_ENV\n{value}\nTELEGRAM_NOTION_ENV\n")
+
+              env_file.write("GEMINI_MODEL<<TELEGRAM_NOTION_ENV\ngemini-2.5-flash\nTELEGRAM_NOTION_ENV\n")
           PY
 
       - name: Load TELEGRAM_NOTION bundled secret
@@ -69,6 +75,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import os
+          import re
           from pathlib import Path
 
           bundled_secret = os.environ.get("TELEGRAM_NOTION", "")
@@ -83,24 +90,61 @@ jobs:
               "NOTION_VERSION",
               "TELEGRAM_MAX_UPDATES",
           }
+          aliases = {
+              "GOOGLE_API_KEY": "GEMINI_API_KEY",
+              "GEMINI_KEY": "GEMINI_API_KEY",
+              "NOTION_API_KEY": "NOTION_TOKEN",
+              "NOTION_INTEGRATION_TOKEN": "NOTION_TOKEN",
+          }
+
+          def normalize_key(raw_key: str) -> str:
+              key = raw_key.strip().upper()
+              key = key.removeprefix("EXPORT ").strip()
+              key = key.replace("\ufeff", "")
+              key = re.sub(r"[\u200b\u200c\u200d\u2060]", "", key)
+              key = re.sub(r"[^A-Z0-9_]", "", key)
+              return aliases.get(key, key)
+
+          def clean_value(raw_value: str) -> str:
+              value = raw_value.strip()
+              if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+                  value = value[1:-1]
+              return value.strip()
 
           if not bundled_secret.strip():
+              print("TELEGRAM_NOTION bundled secret is empty.")
               raise SystemExit(0)
 
+          loaded = []
+          ignored = []
           with Path(github_env).open("a", encoding="utf-8") as env_file:
               for raw_line in bundled_secret.splitlines():
                   line = raw_line.strip()
-                  if not line or line.startswith("#") or "=" not in line:
+                  if not line or line.startswith("#"):
                       continue
 
-                  key, value = line.split("=", 1)
-                  key = key.strip()
-                  value = value.strip()
+                  if "=" in line:
+                      key, value = line.split("=", 1)
+                  elif ":" in line:
+                      key, value = line.split(":", 1)
+                  else:
+                      ignored.append("(line without key/value separator)")
+                      continue
+
+                  key = normalize_key(key)
+                  value = clean_value(value)
                   if key not in allowed_keys or not value:
+                      ignored.append(key or "(empty key)")
                       continue
 
                   print(f"::add-mask::{value}")
+                  loaded.append(key)
                   env_file.write(f"{key}<<TELEGRAM_NOTION_ENV\n{value}\nTELEGRAM_NOTION_ENV\n")
+
+          if loaded:
+              print("Loaded from TELEGRAM_NOTION: " + ", ".join(sorted(set(loaded))))
+          if ignored:
+              print("Ignored TELEGRAM_NOTION keys/lines: " + ", ".join(sorted(set(ignored))))
           PY
 
       - name: Check required configuration

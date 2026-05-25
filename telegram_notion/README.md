@@ -36,7 +36,16 @@ NOTION_TOKEN=xxx
 NOTION_DATA_SOURCE_ID=23ae979d-cae8-803f-8666-000bad6c727d
 ```
 
-如果 workflow log 顯示 secret 是 missing，通常代表 secret 設在錯的 repo、設成 Variables 而不是 Secrets、或設在 Environment secrets 但 workflow 沒有綁定 environment。請優先使用上面的 Repository secrets。
+如果 workflow log 顯示 secret 是 missing，通常代表 secret 設在錯的 repo、整包 secret 內的 key 名稱沒有被解析到、或設在 Environment secrets 但 workflow 沒有綁定 environment。workflow 也會嘗試讀取同名 Repository variables，但請優先使用 Repository secrets。
+
+workflow 會在 log 中顯示：
+
+```text
+Loaded from TELEGRAM_NOTION: ...
+Ignored TELEGRAM_NOTION keys/lines: ...
+```
+
+只會顯示 key 名稱，不會印出 secret value。
 
 可選：
 
