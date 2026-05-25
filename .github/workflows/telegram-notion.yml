@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Poll Telegram and sync confirmed cards
+      - name: Load repository secrets
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_ALLOWED_USER_IDS: ${{ secrets.TELEGRAM_ALLOWED_USER_IDS }}
@@ -38,4 +38,90 @@ jobs:
           GEMINI_MODEL: gemini-2.5-flash
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          github_env = os.environ["GITHUB_ENV"]
+          keys = [
+              "TELEGRAM_BOT_TOKEN",
+              "TELEGRAM_ALLOWED_USER_IDS",
+              "GEMINI_API_KEY",
+              "GEMINI_MODEL",
+              "NOTION_TOKEN",
+              "NOTION_DATA_SOURCE_ID",
+          ]
+
+          with Path(github_env).open("a", encoding="utf-8") as env_file:
+              for key in keys:
+                  value = os.environ.get(key, "")
+                  if not value:
+                      continue
+
+                  print(f"::add-mask::{value}")
+                  env_file.write(f"{key}<<TELEGRAM_NOTION_ENV\n{value}\nTELEGRAM_NOTION_ENV\n")
+          PY
+
+      - name: Load TELEGRAM_NOTION bundled secret
+        env:
+          TELEGRAM_NOTION: ${{ secrets.TELEGRAM_NOTION }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          bundled_secret = os.environ.get("TELEGRAM_NOTION", "")
+          github_env = os.environ["GITHUB_ENV"]
+          allowed_keys = {
+              "TELEGRAM_BOT_TOKEN",
+              "TELEGRAM_ALLOWED_USER_IDS",
+              "GEMINI_API_KEY",
+              "GEMINI_MODEL",
+              "NOTION_TOKEN",
+              "NOTION_DATA_SOURCE_ID",
+              "NOTION_VERSION",
+              "TELEGRAM_MAX_UPDATES",
+          }
+
+          if not bundled_secret.strip():
+              raise SystemExit(0)
+
+          with Path(github_env).open("a", encoding="utf-8") as env_file:
+              for raw_line in bundled_secret.splitlines():
+                  line = raw_line.strip()
+                  if not line or line.startswith("#") or "=" not in line:
+                      continue
+
+                  key, value = line.split("=", 1)
+                  key = key.strip()
+                  value = value.strip()
+                  if key not in allowed_keys or not value:
+                      continue
+
+                  print(f"::add-mask::{value}")
+                  env_file.write(f"{key}<<TELEGRAM_NOTION_ENV\n{value}\nTELEGRAM_NOTION_ENV\n")
+          PY
+
+      - name: Check required configuration
+        run: |
+          missing=0
+          for key in TELEGRAM_BOT_TOKEN GEMINI_API_KEY NOTION_TOKEN NOTION_DATA_SOURCE_ID; do
+            if [ -z "${!key}" ]; then
+              echo "::error::$key is missing. Add it as a repository secret, or put it in the TELEGRAM_NOTION bundled secret."
+              missing=1
+            else
+              echo "$key is set."
+            fi
+          done
+
+          if [ -z "$TELEGRAM_ALLOWED_USER_IDS" ]; then
+            echo "::warning::TELEGRAM_ALLOWED_USER_IDS is empty. /start can still show your user id, but card imports require this secret."
+          else
+            echo "TELEGRAM_ALLOWED_USER_IDS is set."
+          fi
+
+          exit "$missing"
+
+      - name: Poll Telegram and sync confirmed cards
         run: python3 telegram_card_to_notion.py

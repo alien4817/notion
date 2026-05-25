@@ -26,6 +26,18 @@ Telegram 名片照片
 | `NOTION_TOKEN` | Notion integration token |
 | `NOTION_DATA_SOURCE_ID` | `23ae979d-cae8-803f-8666-000bad6c727d` |
 
+也可以只新增一個 repository secret：`TELEGRAM_NOTION`，內容用多行 `.env` 格式：
+
+```text
+TELEGRAM_BOT_TOKEN=xxx
+TELEGRAM_ALLOWED_USER_IDS=123456
+GEMINI_API_KEY=xxx
+NOTION_TOKEN=xxx
+NOTION_DATA_SOURCE_ID=23ae979d-cae8-803f-8666-000bad6c727d
+```
+
+如果 workflow log 顯示 secret 是 missing，通常代表 secret 設在錯的 repo、設成 Variables 而不是 Secrets、或設在 Environment secrets 但 workflow 沒有綁定 environment。請優先使用上面的 Repository secrets。
+
 可選：
 
 | Secret / Env | 預設 | 說明 |
