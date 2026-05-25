@@ -209,6 +209,25 @@ class TelegramClient:
             payload["text"] = text
         self.call("answerCallbackQuery", payload)
 
+    def try_answer_callback_query(self, callback_query_id: str, text: str = "") -> None:
+        try:
+            self.answer_callback_query(callback_query_id, text)
+        except BotError as exc:
+            print(f"Warning: could not answer Telegram callback query: {exc}", file=sys.stderr)
+
+    def try_edit_message_reply_markup(
+        self,
+        chat_id: int,
+        message_id: int | None,
+        reply_markup: dict[str, Any] | None = None,
+    ) -> None:
+        if not message_id:
+            return
+        try:
+            self.edit_message_reply_markup(chat_id, message_id, reply_markup)
+        except BotError as exc:
+            print(f"Warning: could not edit Telegram reply markup: {exc}", file=sys.stderr)
+
     def get_file(self, file_id: str) -> dict[str, Any]:
         return self.call("getFile", {"file_id": file_id})
 
@@ -653,34 +672,33 @@ def handle_callback(
     action = callback.get("data", "")
 
     if not chat_id:
-        telegram.answer_callback_query(callback_id, "找不到原始訊息")
+        telegram.try_answer_callback_query(callback_id, "找不到原始訊息")
         return
     if not is_authorized(config, user_id):
-        telegram.answer_callback_query(callback_id, "未授權")
+        telegram.try_answer_callback_query(callback_id, "未授權")
         telegram.send_message(chat_id, "這個 Telegram 帳號尚未授權使用此 bot。")
         return
 
     if action == "cancel":
-        telegram.answer_callback_query(callback_id, "已略過")
-        if message_id:
-            telegram.edit_message_reply_markup(chat_id, message_id, None)
+        telegram.try_answer_callback_query(callback_id, "已略過")
+        telegram.try_edit_message_reply_markup(chat_id, message_id, None)
         telegram.send_message(chat_id, "已取消，沒有新增到 Notion。")
         return
 
     if action == "retry":
-        telegram.answer_callback_query(callback_id, "請重新傳照片")
+        telegram.try_answer_callback_query(callback_id, "請重新傳照片")
         telegram.send_message(chat_id, "請重新傳一張更清楚的名片照片，我會重新辨識。")
         return
 
     if action not in {"add", "force_add"}:
-        telegram.answer_callback_query(callback_id, "未知操作")
+        telegram.try_answer_callback_query(callback_id, "未知操作")
         return
 
     card = decode_card_payload(message.get("text", ""))
     if action == "add":
         duplicates = notion.query_duplicates(card)
         if duplicates:
-            telegram.answer_callback_query(callback_id, "發現可能重複")
+            telegram.try_answer_callback_query(callback_id, "發現可能重複")
             telegram.send_message(
                 chat_id,
                 format_card_for_telegram(card, duplicates),
@@ -689,9 +707,8 @@ def handle_callback(
             return
 
     page_url = notion.create_card_page(card, force=(action == "force_add"))
-    telegram.answer_callback_query(callback_id, "已新增")
-    if message_id:
-        telegram.edit_message_reply_markup(chat_id, message_id, None)
+    telegram.try_answer_callback_query(callback_id, "已新增")
+    telegram.try_edit_message_reply_markup(chat_id, message_id, None)
     telegram.send_message(chat_id, f"已新增到 Notion：\n{page_url or '(Notion 未回傳 URL)'}")
 
 
