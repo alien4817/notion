@@ -626,6 +626,10 @@ def handle_message(
         return
 
     duplicates = notion.query_duplicates(card)
+    print(
+        "Card extracted for confirmation: "
+        f"name={card.get('name') or '-'}, company={card.get('company') or '-'}, duplicates={len(duplicates)}"
+    )
     if duplicates:
         telegram.send_message(
             chat_id,
@@ -670,6 +674,7 @@ def handle_callback(
     chat_id = message.get("chat", {}).get("id")
     message_id = message.get("message_id")
     action = callback.get("data", "")
+    print(f"Handling callback action={action or '(empty)'}, chat_id={chat_id or '(missing)'}.")
 
     if not chat_id:
         telegram.try_answer_callback_query(callback_id, "找不到原始訊息")
@@ -695,8 +700,10 @@ def handle_callback(
         return
 
     card = decode_card_payload(message.get("text", ""))
+    print(f"Decoded callback card: name={card.get('name') or '-'}, company={card.get('company') or '-'}.")
     if action == "add":
         duplicates = notion.query_duplicates(card)
+        print(f"Duplicate check before Notion create found {len(duplicates)} match(es).")
         if duplicates:
             telegram.try_answer_callback_query(callback_id, "發現可能重複")
             telegram.send_message(
@@ -704,12 +711,15 @@ def handle_callback(
                 format_card_for_telegram(card, duplicates),
                 reply_markup=inline_keyboard([("仍然新增", "force_add"), ("略過", "cancel")]),
             )
+            print("Notion create skipped because duplicate confirmation is required.")
             return
 
     page_url = notion.create_card_page(card, force=(action == "force_add"))
+    print(f"Notion page created: {page_url or '(no URL returned)'}")
     telegram.try_answer_callback_query(callback_id, "已新增")
     telegram.try_edit_message_reply_markup(chat_id, message_id, None)
     telegram.send_message(chat_id, f"已新增到 Notion：\n{page_url or '(Notion 未回傳 URL)'}")
+    print("Telegram success message sent.")
 
 
 def process_update(
