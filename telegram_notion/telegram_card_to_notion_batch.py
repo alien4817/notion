@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Batch runner for Telegram business card imports.
 
-The base importer contains all card extraction and Notion behavior. This runner
-only changes polling semantics so one bad update does not stop later photos.
+The base importer contains the card extraction helpers. This runner changes the
+polling behavior so multiple Telegram updates are handled independently, and
+new cards are written to Notion immediately after recognition.
 """
 
 from __future__ import annotations
@@ -37,15 +38,91 @@ def notify_update_failure(
     try:
         telegram.send_message(
             chat_id,
-            "This card update failed. I skipped it and continued with the other photos.\n"
+            "這筆名片處理失敗，已先跳過並繼續處理其他照片。\n"
             f"update_id: {update_id}\n"
-            f"Error: {exc}",
+            f"錯誤：{exc}",
         )
     except Exception as notify_exc:
         print(
             f"Warning: could not notify Telegram failure for update {update_id}: {notify_exc}",
             file=sys.stderr,
         )
+
+
+def handle_message_and_create(
+    config: importer.Config,
+    telegram: importer.TelegramClient,
+    gemini: importer.GeminiClient,
+    notion: importer.NotionClient,
+    message: dict[str, Any],
+) -> None:
+    chat_id = message["chat"]["id"]
+    user_id = (message.get("from") or {}).get("id")
+    text = importer.clean_text(message.get("text", ""))
+
+    if text.startswith("/start") or text.startswith("/whoami"):
+        allowed_note = "已授權" if importer.is_authorized(config, user_id) else "尚未授權"
+        telegram.send_message(
+            chat_id,
+            f"你的 Telegram user id 是：{user_id}\n狀態：{allowed_note}\n\n請把這個 ID 放進 GitHub Secret TELEGRAM_ALLOWED_USER_IDS。",
+        )
+        return
+
+    if not importer.is_authorized(config, user_id):
+        telegram.send_message(chat_id, "這個 Telegram 帳號尚未授權使用此 bot。請先設定 TELEGRAM_ALLOWED_USER_IDS。")
+        return
+
+    file_id, mime_type = importer.extract_image_file(message)
+    if not file_id:
+        telegram.send_message(chat_id, "請傳一張名片照片，或把名片圖片作為檔案傳送。")
+        return
+
+    telegram.send_message(chat_id, "收到名片照片，正在辨識並準備寫入 Notion...")
+    file_info = telegram.get_file(file_id)
+    image_bytes = telegram.download_file(file_info["file_path"])
+    mime_type = mime_type or importer.guess_mime_type(file_info["file_path"])
+
+    card = gemini.extract_card(image_bytes, mime_type)
+    if not card.get("is_business_card"):
+        telegram.send_message(chat_id, "這張圖片看起來不像名片；請重新拍攝或傳更清楚的名片照片。")
+        return
+
+    duplicates = notion.query_duplicates(card)
+    print(
+        "Card extracted for direct import: "
+        f"name={card.get('name') or '-'}, company={card.get('company') or '-'}, duplicates={len(duplicates)}"
+    )
+    if duplicates:
+        telegram.send_message(
+            chat_id,
+            importer.format_card_for_telegram(card, duplicates),
+            reply_markup=importer.inline_keyboard([("仍然新增", "force_add"), ("略過", "cancel")]),
+        )
+        print("Notion create skipped because duplicate confirmation is required.")
+        return
+
+    page_url = notion.create_card_page(card)
+    print(f"Notion page created: {page_url or '(no URL returned)'}")
+    telegram.send_message(
+        chat_id,
+        "已辨識並新增到 Notion：\n"
+        f"{page_url or '(Notion 未回傳 URL)'}",
+    )
+
+
+def process_update(
+    config: importer.Config,
+    telegram: importer.TelegramClient,
+    gemini: importer.GeminiClient,
+    notion: importer.NotionClient,
+    update: dict[str, Any],
+) -> None:
+    if "message" in update:
+        handle_message_and_create(config, telegram, gemini, notion, update["message"])
+        return
+    if "callback_query" in update:
+        importer.handle_callback(config, telegram, notion, update["callback_query"])
+        return
 
 
 def run_once(config: importer.Config) -> int:
@@ -71,7 +148,7 @@ def run_once(config: importer.Config) -> int:
         last_seen_update_id = update_id
         print(f"Processing update {update_id}...")
         try:
-            importer.process_update(config, telegram, gemini, notion, update)
+            process_update(config, telegram, gemini, notion, update)
         except Exception as exc:
             failed_count += 1
             print(f"Failed to process update {update_id}: {exc}", file=sys.stderr)
