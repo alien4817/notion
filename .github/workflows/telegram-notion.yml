@@ -168,4 +168,4 @@ jobs:
           exit "$missing"
 
       - name: Poll Telegram and sync confirmed cards
-        run: python3 telegram_card_to_notion.py
+        run: python3 telegram_card_to_notion_batch.py
