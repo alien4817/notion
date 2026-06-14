@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🍅 讀書專注番茄鐘</title>
+<style>
+  :root{
+    --bg:#1a1a2e; --card:#16213e; --accent:#e94560; --accent2:#0f3460;
+    --break:#2ecc71; --long:#3498db; --text:#eaeaea; --muted:#8a93b2;
+    --ring-bg:#26304f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Segoe UI','Noto Sans TC',system-ui,sans-serif;
+    background:var(--bg); color:var(--text);
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:16px; transition:background .6s ease;
+  }
+  body.work{background:radial-gradient(circle at 50% 0%,#3a1d2e,#1a1a2e);}
+  body.break{background:radial-gradient(circle at 50% 0%,#143a28,#1a1a2e);}
+  body.long{background:radial-gradient(circle at 50% 0%,#142d4a,#1a1a2e);}
+  .app{
+    width:100%; max-width:420px; background:var(--card);
+    border-radius:24px; padding:28px 24px 24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.45); text-align:center;
+  }
+  .modes{display:flex; gap:8px; justify-content:center; margin-bottom:22px;}
+  .modes button{
+    flex:1; padding:9px 6px; border:none; border-radius:12px;
+    background:transparent; color:var(--muted); font-size:13px;
+    font-weight:600; cursor:pointer; transition:.2s;
+  }
+  .modes button.active{background:var(--accent2); color:#fff;}
+  .ring-wrap{position:relative; width:240px; height:240px; margin:0 auto 18px;}
+  svg{transform:rotate(-90deg);}
+  .ring-bg{stroke:var(--ring-bg);}
+  .ring-fg{stroke:var(--accent); transition:stroke-dashoffset 1s linear, stroke .4s;}
+  body.break .ring-fg{stroke:var(--break);}
+  body.long .ring-fg{stroke:var(--long);}
+  .time{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  .time .clock{font-size:54px; font-weight:700; letter-spacing:2px; font-variant-numeric:tabular-nums;}
+  .time .label{font-size:13px; color:var(--muted); margin-top:4px; letter-spacing:1px;}
+  .controls{display:flex; gap:12px; justify-content:center; margin:8px 0 18px;}
+  .controls button{
+    border:none; border-radius:14px; cursor:pointer; font-weight:700;
+    transition:.15s; color:#fff;
+  }
+  .controls button:active{transform:scale(.94);}
+  #startBtn{background:var(--accent); padding:14px 40px; font-size:18px;}
+  #resetBtn{background:var(--accent2); padding:14px 18px; font-size:16px;}
+  .meta{display:flex; justify-content:space-between; color:var(--muted); font-size:13px; margin-bottom:18px;}
+  .meta b{color:var(--text); font-size:15px;}
+  details{background:#0f1830; border-radius:14px; padding:4px 14px; text-align:left;}
+  summary{cursor:pointer; padding:10px 0; color:var(--muted); font-size:13px; font-weight:600; outline:none;}
+  .setting-row{display:flex; align-items:center; justify-content:space-between; padding:8px 0; font-size:14px;}
+  .setting-row input[type=number]{width:64px; padding:6px; border-radius:8px; border:1px solid #2a3656; background:#0b1124; color:#fff; text-align:center; font-size:14px;}
+  .hint{font-size:11px; color:var(--muted); margin-top:14px; line-height:1.5;}
+  .toast{position:fixed; top:18px; left:50%; transform:translateX(-50%); background:var(--accent); color:#fff; padding:10px 18px; border-radius:12px; font-size:14px; opacity:0; transition:.3s; pointer-events:none; z-index:9;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body class="work">
+<div class="toast" id="toast"></div>
+<div class="app">
+  <div class="modes">
+    <button data-mode="work" class="active">專注</button>
+    <button data-mode="break">短休息</button>
+    <button data-mode="long">長休息</button>
+  </div>
+  <div class="ring-wrap">
+    <svg width="240" height="240" viewBox="0 0 240 240">
+      <circle class="ring-bg" cx="120" cy="120" r="110" fill="none" stroke-width="14"/>
+      <circle class="ring-fg" id="ring" cx="120" cy="120" r="110" fill="none" stroke-width="14" stroke-linecap="round"/>
+    </svg>
+    <div class="time">
+      <div class="clock" id="clock">25:00</div>
+      <div class="label" id="label">準備開始</div>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="startBtn">開始</button>
+    <button id="resetBtn">重設</button>
+  </div>
+  <div class="meta">
+    <span>今日完成番茄 <b id="doneCount">0</b></span>
+    <span>本輪 <b id="roundCount">0</b>/<span id="cycleTarget">4</span></span>
+  </div>
+  <details>
+    <summary>⚙️ 設定</summary>
+    <div class="setting-row"><span>專注（分鐘）</span><input type="number" id="workMin" value="25" min="1" max="120"></div>
+    <div class="setting-row"><span>短休息（分鐘）</span><input type="number" id="breakMin" value="5" min="1" max="60"></div>
+    <div class="setting-row"><span>長休息（分鐘）</span><input type="number" id="longMin" value="15" min="1" max="60"></div>
+    <div class="setting-row"><span>每幾輪長休息</span><input type="number" id="cycle" value="4" min="2" max="10"></div>
+    <div class="setting-row"><span>自動接續下一段</span><input type="checkbox" id="autoNext" checked></div>
+  </details>
+  <p class="hint">提示音 + 桌面通知會在每段結束時觸發。<br>首次使用請允許通知權限。今日番茄數儲存在本機瀏覽器。</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const ring=$('ring'),clock=$('clock'),label=$('label'),startBtn=$('startBtn'),resetBtn=$('resetBtn');
+const workMin=$('workMin'),breakMin=$('breakMin'),longMin=$('longMin'),cycle=$('cycle'),autoNext=$('autoNext');
+const doneCountEl=$('doneCount'),roundCountEl=$('roundCount'),cycleTargetEl=$('cycleTarget'),toast=$('toast');
+const MODES={work:{min:()=>+workMin.value,label:'專注中',title:'🍅 專注時間'},break:{min:()=>+breakMin.value,label:'短休息',title:'☕ 休息一下'},long:{min:()=>+longMin.value,label:'長休息',title:'🌴 長休息'}};
+const R=110, CIRC=2*Math.PI*R;
+ring.style.strokeDasharray=CIRC;
+function today(){return new Date().toISOString().slice(0,10);}
+let mode='work',total=25*60,remain=25*60,timer=null,running=false;
+let done=+(localStorage.getItem('pomo_done_'+today())||0);
+let round=0;
+function fmt(s){const m=Math.floor(s/60),x=s%60;return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');}
+function render(){
+  clock.textContent=fmt(remain);
+  label.textContent=running?MODES[mode].label:'準備開始';
+  ring.style.strokeDashoffset=CIRC*(1-remain/total);
+  document.body.className=mode;
+  doneCountEl.textContent=done;
+  roundCountEl.textContent=round;
+  cycleTargetEl.textContent=cycle.value;
+  document.title=(running?fmt(remain)+' · ':'')+MODES[mode].title;
+}
+function setMode(m,resetRun){
+  mode=m;total=MODES[m].min()*60;remain=total;
+  document.querySelectorAll('.modes button').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+  if(resetRun!==false){stop();}
+  render();
+}
+function beep(){
+  try{const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    [660,880,990].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type='sine';const t=ctx.currentTime+i*0.22;g.gain.setValueAtTime(0.001,t);g.gain.exponentialRampToValueAtTime(0.4,t+0.03);g.gain.exponentialRampToValueAtTime(0.001,t+0.2);o.start(t);o.stop(t+0.21);});
+  }catch(e){}
+}
+function notify(title,body){
+  showToast(body);
+  if('Notification' in window && Notification.permission==='granted'){try{new Notification(title,{body:body});}catch(e){}}
+}
+function showToast(msg){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),3200);}
+function tick(){remain--;if(remain<=0){complete();return;}render();}
+function complete(){
+  stop();beep();
+  if(mode==='work'){
+    done++;round++;localStorage.setItem('pomo_done_'+today(),done);
+    notify('🍅 專注完成！','做得好，休息一下吧。今日已完成 '+done+' 顆番茄。');
+    setMode((round%(+cycle.value)===0)?'long':'break',false);
+  }else{
+    notify('⏰ 休息結束','回到書桌，開始下一段專注！');
+    setMode('work',false);
+  }
+  render();
+  if(autoNext.checked){setTimeout(start,1200);}
+}
+function start(){
+  if(running)return;
+  if('Notification' in window && Notification.permission==='default'){Notification.requestPermission();}
+  running=true;startBtn.textContent='暫停';timer=setInterval(tick,1000);render();
+}
+function pause(){running=false;startBtn.textContent='繼續';clearInterval(timer);render();}
+function stop(){running=false;startBtn.textContent='開始';clearInterval(timer);}
+startBtn.onclick=()=>{running?pause():start();};
+resetBtn.onclick=()=>{setMode(mode);};
+document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+[workMin,breakMin,longMin,cycle].forEach(inp=>inp.onchange=()=>{if(!running)setMode(mode);render();});
+setMode('work');render();
+</script>
+</body>
+</html>
