@@ -29,7 +29,15 @@ function getTargetUrls() {
     .map((url) => url.trim())
     .filter(Boolean);
 
-  return [...new Set([...(configuredUrls ?? []), ...DEFAULT_TARGET_URLS])];
+  const urlsByPage = new Map<string, string>();
+  for (const url of [...(configuredUrls ?? []), ...DEFAULT_TARGET_URLS]) {
+    const normalizedKey = url.replace(/^https?:\/\//u, "").toLowerCase();
+    if (!urlsByPage.has(normalizedKey)) {
+      urlsByPage.set(normalizedKey, url);
+    }
+  }
+
+  return [...urlsByPage.values()];
 }
 
 function getUrlCandidates(url: string) {
